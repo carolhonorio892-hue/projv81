@@ -1015,7 +1015,9 @@ class CPLDevastadorProtocol:
     def _salvar_dados_contextuais(self, session_id: str, search_results, contexto: ContextoEstrategico):
         """Salva dados contextuais coletados"""
         try:
-            session_dir = f"/workspace/project/V189/analyses_data/{session_id}"
+            # Usar o mesmo padrão dos outros módulos
+            base_dir = os.path.join(os.path.dirname(__file__), '..', '..', 'analyses_data')
+            session_dir = os.path.join(base_dir, session_id)
             os.makedirs(session_dir, exist_ok=True)
             
             # Salvar contexto com dados mínimos garantidos
@@ -1059,14 +1061,16 @@ class CPLDevastadorProtocol:
     def _validar_dados_coletados(self, session_id: str) -> bool:
         """Valida se os dados coletados são suficientes"""
         try:
-            session_dir = f"/workspace/project/V189/analyses_data/{session_id}"
+            # Usar o mesmo padrão dos outros módulos
+            base_dir = os.path.join(os.path.dirname(__file__), '..', '..', 'analyses_data')
+            session_dir = os.path.join(base_dir, session_id)
             
             # Verificar arquivos críticos com validação mais flexível
             arquivos_criticos = [
-                f"{session_dir}/contexto/termos_chave.md",
-                f"{session_dir}/objecoes/objecoes_principais.md",
-                f"{session_dir}/casos_sucesso/casos_verificados.md",
-                f"{session_dir}/tendencias/tendencias_atuais.md"
+                os.path.join(session_dir, "contexto", "termos_chave.md"),
+                os.path.join(session_dir, "objecoes", "objecoes_principais.md"),
+                os.path.join(session_dir, "casos_sucesso", "casos_verificados.md"),
+                os.path.join(session_dir, "tendencias", "tendencias_atuais.md")
             ]
             
             arquivos_validos = 0
@@ -1092,7 +1096,9 @@ class CPLDevastadorProtocol:
     def _salvar_fase(self, session_id: str, fase: int, dados: Dict[str, Any]):
         """Salva dados de uma fase específica"""
         try:
-            session_dir = f"/workspace/project/V189/analyses_data/{session_id}"
+            # Usar o mesmo padrão dos outros módulos
+            base_dir = os.path.join(os.path.dirname(__file__), '..', '..', 'analyses_data')
+            session_dir = os.path.join(base_dir, session_id)
             modules_dir = os.path.join(session_dir, 'modules')
             os.makedirs(modules_dir, exist_ok=True)
             
@@ -1111,15 +1117,99 @@ class CPLDevastadorProtocol:
                 f.write(f"# Fase {fase}\n\n")
                 f.write(f"```json\n{json.dumps(dados, ensure_ascii=False, indent=2)}\n```")
             
+            # Salvar também como módulo individual para o relatório final
+            self._salvar_cpl_como_modulo(session_id, fase, dados)
+            
             logger.info(f"✅ Fase {fase} salva: {filepath}")
             
         except Exception as e:
             logger.error(f"❌ Erro ao salvar fase {fase}: {e}")
     
+    def _salvar_cpl_como_modulo(self, session_id: str, fase: int, dados: Dict[str, Any]):
+        """Salva CPL individual como módulo para integração no relatório final"""
+        try:
+            base_dir = os.path.join(os.path.dirname(__file__), '..', '..', 'analyses_data')
+            session_dir = os.path.join(base_dir, session_id)
+            modules_dir = os.path.join(session_dir, 'modules')
+            os.makedirs(modules_dir, exist_ok=True)
+            
+            # Mapear fases para nomes de módulos CPL
+            cpl_modules = {
+                1: 'cpl_protocol_1',
+                2: 'cpl_protocol_2', 
+                3: 'cpl_protocol_3',
+                4: 'cpl_protocol_4',
+                5: 'cpl_protocol_5'
+            }
+            
+            module_name = cpl_modules.get(fase)
+            if not module_name:
+                return
+                
+            # Criar conteúdo formatado do módulo
+            if fase == 1:
+                # Arquitetura do Evento Magnético
+                content = f"""# CPL1 - Arquitetura do Evento Magnético
+
+## Evento Magnético Criado
+{dados.get('evento', {}).get('nome', 'N/A')}
+
+## Descrição
+{dados.get('evento', {}).get('descricao', 'N/A')}
+
+## Elementos Chave
+{dados.get('evento', {}).get('elementos_chave', 'N/A')}
+
+## Impacto Esperado
+{dados.get('evento', {}).get('impacto_esperado', 'N/A')}
+
+## Dados Completos
+```json
+{json.dumps(dados, ensure_ascii=False, indent=2)}
+```
+"""
+            else:
+                # CPLs 2-5
+                cpl_data = dados.get('cpl', {})
+                content = f"""# CPL{fase} - {cpl_data.get('titulo', 'N/A')}
+
+## Título
+{cpl_data.get('titulo', 'N/A')}
+
+## Subtítulo
+{cpl_data.get('subtitulo', 'N/A')}
+
+## Conteúdo Principal
+{cpl_data.get('conteudo_principal', 'N/A')}
+
+## Call to Action
+{cpl_data.get('call_to_action', 'N/A')}
+
+## Elementos Visuais
+{cpl_data.get('elementos_visuais', 'N/A')}
+
+## Dados Completos
+```json
+{json.dumps(dados, ensure_ascii=False, indent=2)}
+```
+"""
+            
+            # Salvar módulo
+            module_path = os.path.join(modules_dir, f'{module_name}.md')
+            with open(module_path, 'w', encoding='utf-8') as f:
+                f.write(content)
+                
+            logger.info(f"✅ CPL módulo salvo: {module_path}")
+            
+        except Exception as e:
+            logger.error(f"❌ Erro ao salvar CPL como módulo: {e}")
+    
     def _salvar_resultado_final(self, session_id: str, resultado: Dict[str, Any]):
         """Salva resultado final do protocolo"""
         try:
-            session_dir = f"/workspace/project/V189/analyses_data/{session_id}"
+            # Usar o mesmo padrão dos outros módulos
+            base_dir = os.path.join(os.path.dirname(__file__), '..', '..', 'analyses_data')
+            session_dir = os.path.join(base_dir, session_id)
             
             # Salvar JSON completo
             json_path = os.path.join(session_dir, 'cpl_protocol_result.json')
